@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>Javascript Coroutine Event Loop Demo</title>
+
+</head>
+<body>
+
+<h2 id="the-convenient-coroutine-wrapper">The Convenient <code>coroutine</code> Wrapper</h2>
+<p>Every time you use a coroutine you always do three things:</p>
+<ol>
+    <li>Call the function and store the resulting coroutine object.</li>
+    <li>Call <code>next()</code> on the coroutine object, to execute until the first <code>yield</code> .</li>
+    <li>After that all you can do is call <code>next(...)</code> to run the coroutine and send it values.</li>
+</ol>
+<p>We can put all of this functionality into a wrapper function:</p>
+<pre class="prettyprint">
+    function coroutine(f) {
+        var o = f();        // instantiate the coroutine
+        o.next();           // execute until the first yield
+        return function(x) {
+            o.next(x);
+        }
+    }
+</pre>
+<p>
+    This sets up the coroutine and returns a function which we can call directly instead of calling <code>next</code> on the coroutine object.
+</p>
+<p>Using this wrapper, our earlier example becomes:</p>
+<pre class="prettyprint">
+    var test = coroutine(function*() {
+        console.log('Hello!');
+        var x = yield;
+        console.log('First I got: ' + x);
+        var y = yield;
+        console.log('Then I got: ' + y);
+    });
+    // prints 'Hello!'
+
+    test('a dog');          // prints 'First I got: a dog'
+    test('a cat');          // prints 'Then I got: a cat'
+</pre>
+
+
+<p>This demo of a <a href="index.html">coroutine event loop</a> uses features of ECMAScript 6 and thus <strong>only works in recent versions of Firefox or Chrome</strong>.</p>
+<p>Try dragging the box around, and observe how the code behaves:</p>
+<div class="space">
+    <div id="box" class="box"></div>
+</div>
+
+<p></p>
+
+<pre class="prettyprint">var loop = coroutine(function*() {
+    var event;
+    <span class="not-dragging mousemove-1 mousedown-1">while (event = <span class="not-dragging yield">yield</span>) { // not dragging</span>
+        <span class="not-dragging mousedown-2">if (event.type == 'mousedown') {</span>
+            <span class="dragging mousemove-1 mouseup-1">while (event = <span class="dragging yield">yield</span>) { // dragging</span>
+                <span class="dragging mousemove-2">if (event.type == 'mousemove')</span>
+                    <span class="dragging mousemove-3">move(event);</span>
+                <span class="dragging mouseup-2">if (event.type == 'mouseup')</span>
+                    <span class="dragging mouseup-3">break;</span>
+            }
+        }
+        <span class="not-dragging mousemove-2 mousemove-3">// ignore mousemoves</span>
+    }
+});
+
+$('#box').mousedown(loop);
+$(window).mousemove(loop).mouseup(loop);
+</pre>
+</body>
+</html>
